@@ -13,13 +13,18 @@ namespace RemoteControlRobot
         // Service port
 		const string hostname = "23.101.77.124";
         //const string hostname = "localhost";
+		public static AzureStorage store = new AzureStorage();
+		public static RemoteYumi yumi;
 
         static void Main(string[] args)
         {
+			var httpClient = RobotClientProvider.GetHttpClientAsync(hostname).Result;
+			Program.yumi = new RemoteYumi(hostname, httpClient);
+
             try
             {
                 //RunWithProgramPointer().Wait();
-                RunWithRunLoop().Wait();
+                //RunWithRunLoop().Wait();
 
             }
             catch (Exception ex)

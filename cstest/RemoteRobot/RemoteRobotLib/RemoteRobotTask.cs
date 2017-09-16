@@ -100,6 +100,11 @@ namespace RemoteRobotLib
             return ParseBoolString(value);
         }
 
+		async Task SetNumVariable(string moduleName, string name, float value)
+		{
+			await SetStringVariable(moduleName, name, value.ToString());
+		}
+
         async Task SetBoolVariable(string moduleName, string name, bool value)
         {
             await SetStringVariable(moduleName, name, GetBoolString(value));
@@ -147,6 +152,28 @@ namespace RemoteRobotLib
 			}
 
 			return res;
+		}
+
+		public async Task openGripper()
+		{
+			await SetBoolVariable("LiveFollow", "bGripperState", false);
+		}
+
+		public async Task closeGripper()
+		{
+			await SetBoolVariable("LiveFollow", "bGripperState", true);
+		}
+
+		public async Task movetoPoint(float x, float y)
+		{
+			SetNumVariable ("LiveFollow", "nXPos", x);
+			SetNumVariable ("LiveFollow", "nYPos", y);
+		}
+
+		public async Task activatelive()
+		{
+			await SetStringVariable ("Remote", "stName", "StartLiveFollow");
+			await SetBoolVariable("Remote", "bStart", true);
 		}
     }
 }
