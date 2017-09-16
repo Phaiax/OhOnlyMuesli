@@ -44,7 +44,7 @@ namespace RemoteRobotLib
             const string moduleName = "Remote";
 
             // First, let it know what procedure we want to run.
-            await SetStringVariable(moduleName, "stName", $"\"{procedureName}\"");
+			await SetStringVariable(moduleName, "stName", procedureName);
             // Then, tell the robot to stop waiting and start.
             await SetBoolVariable(moduleName, "bStart", true);
             // Immediately after starting the robot will set the bStart boolean back to false.
@@ -91,26 +91,31 @@ namespace RemoteRobotLib
         async Task<bool> GetBoolVariable(string moduleName, string name)
         {
             string urlString = $"http://{_hostname}/rw/rapid/symbol/data/RAPID/{_taskName}/{moduleName}/{name}?json=1";
-			Console.WriteLine ("GET " + urlString);
             var response = await _client.GetAsync(urlString);
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             JObject json = JObject.Parse(content);
             string value = json["_embedded"]["_state"][0]["value"].ToString();
+			Console.WriteLine ("GET " + urlString + " getBool() -> " + value);
             return ParseBoolString(value);
         }
 
 		async Task SetNumVariable(string moduleName, string name, float value)
 		{
-			await SetStringVariable(moduleName, name, value.ToString());
+			await SetVariable(moduleName, name, value.ToString());
 		}
 
         async Task SetBoolVariable(string moduleName, string name, bool value)
         {
-            await SetStringVariable(moduleName, name, GetBoolString(value));
+            await SetVariable(moduleName, name, GetBoolString(value));
         }
 
-        async Task SetStringVariable(string moduleName, string name, string value)
+		async Task SetStringVariable(string moduleName, string name, string value)
+		{
+			await SetVariable (moduleName, name, $"\"{value}\"");
+		}
+
+        async Task SetVariable(string moduleName, string name, string value)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -118,9 +123,10 @@ namespace RemoteRobotLib
             };
             var content = new FormUrlEncodedContent(parameters);
             string urlString = $"http://{_hostname}/rw/rapid/symbol/data/RAPID/{_taskName}/{moduleName}/{name}?action=set";
-			Console.WriteLine ("POST " + urlString + " " + DictToString(parameters));
             var response = await _client.PostAsync(urlString, content);
             response.EnsureSuccessStatusCode();
+			string respcontent = await response.Content.ReadAsStringAsync();
+			Console.WriteLine ("POST " + urlString + " " + DictToString(parameters) + " " + respcontent);
         }
         string GetBoolString(bool value)
         {
@@ -154,26 +160,32 @@ namespace RemoteRobotLib
 			return res;
 		}
 
-		public async Task openGripper()
+		public async Task OpenGripper()
 		{
 			await SetBoolVariable("LiveFollow", "bGripperState", false);
 		}
 
-		public async Task closeGripper()
+		public async Task CloseGripper()
 		{
 			await SetBoolVariable("LiveFollow", "bGripperState", true);
 		}
 
-		public async Task movetoPoint(float x, float y)
+		public async Task MoveToPoint(float x, float y)
 		{
-			SetNumVariable ("LiveFollow", "nXPos", x);
-			SetNumVariable ("LiveFollow", "nYPos", y);
+			await Task.WhenAll(SetNumVariable ("LiveFollow", "nXPos", x),
+							   SetNumVariable ("LiveFollow", "nYPos", y));
 		}
 
-		public async Task activatelive()
+		public async Task ActivateLiveFollow()
 		{
 			await SetStringVariable ("Remote", "stName", "StartLiveFollow");
 			await SetBoolVariable("Remote", "bStart", true);
+			await WaitForBoolValue("LiveFollow", "bLiveFollowActive", true);
+		}
+
+		public async Task DisableLiveFollow()
+		{
+			await SetBoolVariable("LiveFollow", "bLiveFollowActive", false);
 		}
     }
 }

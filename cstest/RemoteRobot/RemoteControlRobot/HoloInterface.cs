@@ -21,6 +21,7 @@ namespace RemoteControlRobot
 		public void StartRecording() {
 			currentPath.Clear ();
 			isRecording = true;
+			StartMotion ();
 		}
 
 		public void StopRecording() {
@@ -28,31 +29,34 @@ namespace RemoteControlRobot
 				isRecording = false;
 				Program.store.putBlob (currentPath.ToArray ());
 			}
+			StopMotion ();
 		}
 
 		public void StartMotion() {
 			if (!isMoving) {
 				isMoving = true;
+				Program.yumi.RightArm.ActivateLiveFollow ().Wait();
 			}
 		}
 
 		public void StopMotion() {
 			if (isMoving) {
 				isMoving = false;
+				Program.yumi.RightArm.DisableLiveFollow ();
 			}
 		}
 
 		public void CloseGripper() {
 			if (g_state == false) {
 				g_state = true;
-				Program.yumi.RightArm.closeGripper ();
+				Program.yumi.RightArm.CloseGripper ();
 			}
 		}
 
 		public void OpenGripper() {
 			if (g_state == true) {
 				g_state = false;
-				Program.yumi.RightArm.openGripper ();
+				Program.yumi.RightArm.OpenGripper ();
 			}
 		}
 
@@ -66,7 +70,7 @@ namespace RemoteControlRobot
 				}
 				if (isMoving) {
 					//moving...  MyPoint (x, y, z, g_state
-
+					Program.yumi.RightArm.MoveToPoint(x, y);
 				}
 			}
 		}

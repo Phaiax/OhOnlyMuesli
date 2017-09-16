@@ -26,7 +26,6 @@ namespace RemoteRobotLib
                 var credentialCache = new CredentialCache();
                 credentialCache.Add(new Uri($"http://{robotHostname}/rw"), "Digest",
                     new NetworkCredential("Default User", "robotics"));
-                var httpClientHandler = new HttpClientHandler();
                 client = new HttpClient(new HttpClientHandler { Credentials = credentialCache });
                 _clients.Add(robotHostname, client);
 

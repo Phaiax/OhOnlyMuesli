@@ -20,12 +20,16 @@ namespace RemoteControlRobot
         {
 			var httpClient = RobotClientProvider.GetHttpClientAsync(hostname).Result;
 			Program.yumi = new RemoteYumi(hostname, httpClient);
+			Program.yumi.Init().Wait();
+			Program.yumi.RunProcedureForBothArms("Home").Wait();
+			Program.yumi.LeftArm.RunProcedure ("HandUp");
+			Console.WriteLine (" ==== INIT COMPLETE === ");
 
             try
             {
-                //RunWithProgramPointer().Wait();
-                //RunWithRunLoop().Wait();
-
+				//RunWithProgramPointer().Wait();
+				//RunWithRunLoop().Wait();
+				Test().Wait();
             }
             catch (Exception ex)
             {
@@ -33,6 +37,19 @@ namespace RemoteControlRobot
             }
             Console.ReadKey();
         }
+
+		static async Task Test()
+		{
+			HoloInterface h = new HoloInterface();
+			h.StartMotion();
+			h.OpenGripper();
+			await Task.Delay (2000);
+			h.CloseGripper();
+			await Task.Delay (2000);
+			h.StopMotion();
+			await Task.Delay (2000);
+			Console.WriteLine ("Waiting Finished");
+		}
 
         static async Task RunWithProgramPointer()
         {
