@@ -12,7 +12,10 @@ namespace RemoteControlRobot
 		bool isMoving = false;
 
 		bool g_state=false;
-		float tresh=0.05f; //meter :D
+		float tresh=10f; //meter :D
+
+		MyPoint ground0, actPoint;
+		MyPoint initPoint = new MyPoint(90,-157,148);
 
 		public HoloInterface ()
 		{
@@ -22,6 +25,7 @@ namespace RemoteControlRobot
 			currentPath.Clear ();
 			isRecording = true;
 			StartMotion ();
+			currentPath.Add (initPoint);
 		}
 
 		public void StopRecording() {
@@ -36,6 +40,8 @@ namespace RemoteControlRobot
 			if (!isMoving) {
 				isMoving = true;
 				Program.yumi.RightArm.ActivateLiveFollow ().Wait();
+				ground0 = actPoint;
+				currentPath.Add (initPoint); //sonst lässt sich das delta nicht berechnen
 			}
 		}
 
@@ -45,6 +51,21 @@ namespace RemoteControlRobot
 				Program.yumi.RightArm.DisableLiveFollow ();
 			}
 		}
+
+		public void GoodBoy() {
+			if (isMoving) {				
+				Program.yumi.RightArm.DisableLiveFollow ();
+			}
+			Program.yumi.RunProcedureForBothArms("Home").Wait();
+			Program.yumi.RunProcedureForBothArms("Powerful").Wait();
+			Program.yumi.RightArm.RunProcedure("Home").Wait();
+			Program.yumi.LeftArm.RunProcedure("HandUp").Wait();
+
+			if (isMoving) {
+				Program.yumi.RightArm.ActivateLiveFollow ().Wait ();
+			}
+		}
+			
 
 		public void CloseGripper() {
 			if (g_state == false) {
@@ -61,16 +82,24 @@ namespace RemoteControlRobot
 		}
 
 		public void UpdatePoint(float x, float y, float z) {
-			MyPoint lastp =	currentPath[currentPath.Count-1];
-			MyPoint diffp = lastp.diff_point(new MyPoint(x,y,z,g_state));
-			float dist = (float) Math.Sqrt(diffp.x * diffp.x + diffp.y * diffp.y + diffp.z * diffp.z);
-			if (dist > tresh || lastp.g != g_state) {
-				if (isRecording) {
-					currentPath.Add (new MyPoint (x, y, z, g_state));
-				}
-				if (isMoving) {
-					//moving...  MyPoint (x, y, z, g_state
-					Program.yumi.RightArm.MoveToPoint(x, y);
+			x = x * 1000.0;
+			y = y * 1000.0;
+			z = z * 1000.0;
+			actPoint = MyPoint (x, y, z, g_state);
+			MyPoint newpoint = actPoint;
+			newpoint = newpoint.diff_point(ground0);
+			if (currentPath.Count > 0) {				
+				float dist = (float)Math.Sqrt (newpoint.x * newpoint.x + newpoint.y * newpoint.y + newpoint.z * newpoint.z);
+				if (dist > tresh || lastp.g != g_state) {
+					MyPoint lastp =	currentPath [currentPath.Count - 1];
+					MyPoint diffp = lastp.add_point (newpoint);
+					if (isRecording) {
+						currentPath.Add (diffp);
+					}
+					if (isMoving) {
+						//moving...  MyPoint (x, y, z, g_state
+						Program.yumi.RightArm.MoveToPoint (diffp.x,diffp.y);
+					}
 				}
 			}
 		}

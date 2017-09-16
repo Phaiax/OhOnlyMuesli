@@ -41,13 +41,15 @@ namespace RemoteControlRobot
 		static async Task Test()
 		{
 			HoloInterface h = new HoloInterface();
-			h.StartMotion();
-			h.OpenGripper();
+			//h.StartMotion();
+			//h.OpenGripper();
+			//await Task.Delay (2000);
+			//h.CloseGripper();
+			//await Task.Delay (2000);
+			//h.StopMotion();
 			await Task.Delay (2000);
-			h.CloseGripper();
-			await Task.Delay (2000);
-			h.StopMotion();
-			await Task.Delay (2000);
+			h.GoodBoy ();
+			await Task.Delay (4000);
 			Console.WriteLine ("Waiting Finished");
 		}
 
