@@ -20,33 +20,50 @@ assert(r0.status_code == 200)
 #print(r0.json()['_embedded']['_state'][0]['value'])
 
 
-def check(arm, variable):
-    r = session.get(url + '/rapid/symbol/data/RAPID/'+arm+'/Remote/'+variable+'?json=1')
+def check(arm, variable, module='Remote'):
+    r = session.get(url + '/rapid/symbol/data/RAPID/'+arm+'/'+module+'/'+variable+'?json=1')
+    if r.status_code != 200:
+        print(r)
+        print(r.text)
     assert(r.status_code == 200)
     return r.json()['_embedded']['_state'][0]['value']
 
-def checkBool(arm, variable):
-    return True if check(arm, variable) == "TRUE" else False
+def checkBool(arm, variable, module='Remote'):
+    return True if check(arm, variable, module) == "TRUE" else False
 
-def setString(arm, variable, text):
+def setString(arm, variable, text, module="Remote"):
     payload={'value':'"'+text+'"'}
-    r = session.post(url + '/rapid/symbol/data/RAPID/'+arm+'/Remote/'+variable+'?action=set',
+    r = session.post(url + '/rapid/symbol/data/RAPID/'+arm+'/'+module+'/'+variable+'?action=set',
                      data=payload)
-    print(r)
-    print(r.text)
+    if r.status_code != 204:
+        print(r)
+        print(r.text)
     assert(r.status_code == 204)
     return r
 
-def setBool(arm, variable, state):
+def setBool(arm, variable, state, module="Remote"):
     payload={'value': 'true' if state else 'false' }
-    r = session.post(url + '/rapid/symbol/data/RAPID/'+arm+'/Remote/'+variable+'?action=set',
+    r = session.post(url + '/rapid/symbol/data/RAPID/'+arm+'/'+module+'/'+variable+'?action=set',
                      data=payload)
-    print(r)
-    print(r.text)
+    if r.status_code != 204:
+        print(r)
+        print(r.text)
     assert(r.status_code == 204)
     return r
+
+def setNum(arm, variable, num, module="Remote"):
+    payload={'value': num }
+    r = session.post(url + '/rapid/symbol/data/RAPID/'+arm+'/'+module+'/'+variable+'?action=set',
+                     data=payload)
+    if r.status_code != 204:
+        print(r)
+        print(r.text)
+    assert(r.status_code == 204)
+    return r
+
 
 def moveRobot(arm,action):
+
     print("RUNNING:" + check(arm, 'bRunning'))
 
     setString(arm, 'stName', action)
@@ -67,17 +84,31 @@ def moveRobot(arm,action):
 
     return;
 
+def liveFollow():
+    arm = 'T_ROB_R';
+    setString(arm, 'stName', 'StartLiveFollow')
+    setBool(arm, 'bStart', True)
 
+    for x in range(1,100):
+        time.sleep(0.1)
+        setNum(arm, 'nXPos', x*10, module='LiveFollow')
+        print(x*10);
+
+    setBool(arm, 'bLiveFollowActive', False, module='LiveFollow')
+    time.sleep(0.5)
+    running = checkBool(arm, 'bRunning')
+    print("RUNNING:" + str(running))
 
 # the trick seems to be to run both arms in parallel because of the
 # waitAsyncTask directive in the RAPID code
 
 class otherArm(Thread):
     def run(self):
-        moveRobot('T_ROB_L','NoClue')
+        moveRobot('T_ROB_L','HandUp')
 
 
 other = otherArm()
 other.start()
-moveRobot('T_ROB_R','NoClue')
+#moveRobot('T_ROB_R','NoClue')
+liveFollow()
 
