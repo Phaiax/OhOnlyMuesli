@@ -69,7 +69,7 @@ def moveRobot(arm,action):
 
 
 
-# the trick seems to run both arms in parralel because of the
+# the trick seems to be to run both arms in parallel because of the
 # waitAsyncTask directive in the RAPID code
 
 class otherArm(Thread):
