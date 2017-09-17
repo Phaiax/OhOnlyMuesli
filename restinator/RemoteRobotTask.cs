@@ -8,7 +8,6 @@ using Windows.Web.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
 namespace NewRobotControl
@@ -92,10 +91,9 @@ namespace NewRobotControl
         {
             // Setting up subscriptions requires a websocket connection.
             // Let's use polling for now.
-            var b1 = await GetBoolVariable(moduleName, name);
             while ((await GetBoolVariable(moduleName, name)) != value)
             {
-                Task.Delay(100).RunSynchronously();
+                await Task.Delay(100);
             }
         }
 
@@ -107,11 +105,13 @@ namespace NewRobotControl
             var response = await _client.GetAsync(new Uri(url));
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
+            var tr = content.Contains("\"value\":\"TRUE\"");
+            //MainScript.Log("JSON " + content);
             //JObject json = JObject.Parse(content);
             //string value = json["_embedded"]["_state"][0]["value"].ToString();
-            string value = "false";
-            MainScript.Log("GET " + url + " getBool() -> " + value);
-            return ParseBoolString(value);
+            //string value = "false";
+            MainScript.Log("GET " + url + " getBool() -> " + tr.ToString() + content);
+            return tr;
 #else   
             return false;
 #endif

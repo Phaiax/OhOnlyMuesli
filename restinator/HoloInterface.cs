@@ -30,6 +30,7 @@ namespace NewRobotControl
             store = new AzureStorage();
             Task.Run(async () => 
             {
+                await Task.Delay(1000);
                 await InitAsync();
             });
             
@@ -85,7 +86,8 @@ namespace NewRobotControl
             if (isRecording)
             {
                 isRecording = false;
-                store.putBlob (currentPath.ToArray ());
+                var arr = currentPath.ToArray();
+                Task.Run(async () => { await store.putBlob(arr); });
             }
             StopMotion();
         }
@@ -96,7 +98,9 @@ namespace NewRobotControl
             if (!isMoving)
             {
                 isMoving = true;
-                yumi.RightArm.ActivateLiveFollow();
+                
+                Task.Run(async () => { await yumi.RightArm.ActivateLiveFollow(); });
+
                 ground0 = actPoint;
                 currentPath.Add(initPoint); //sonst lässt sich das delta nicht berechnen
             }
@@ -108,7 +112,7 @@ namespace NewRobotControl
             if (isMoving)
             {
                 isMoving = false;
-                yumi.RightArm.DisableLiveFollow();
+                Task.Run(async () => { await yumi.RightArm.DisableLiveFollow(); });
             }
         }
 
@@ -118,7 +122,7 @@ namespace NewRobotControl
             if (g_state == false)
             {
                 g_state = true;
-                yumi.RightArm.CloseGripper();
+                Task.Run(async () => { await yumi.RightArm.CloseGripper(); });
             }
         }
 
@@ -128,26 +132,29 @@ namespace NewRobotControl
             if (g_state == true)
             {
                 g_state = false;
-                yumi.RightArm.OpenGripper();
+                Task.Run(async () => { await yumi.RightArm.OpenGripper(); });
             }
         }
 
 
         public void GoodBoy()
         {
-            if (isMoving)
-            {
-                yumi.RightArm.DisableLiveFollow().Wait();
-            }
-            yumi.RunProcedureForBothArms("Home");
-            yumi.RunProcedureForBothArms("Powerful");
-            yumi.RightArm.RunProcedure("Home").Wait();
-            yumi.LeftArm.RunProcedure("HandUp").Wait();
+            Task.Run(async () => { 
 
-            if (isMoving)
-            {
-                yumi.RightArm.ActivateLiveFollow().Wait();
-            }
+                if (isMoving)
+                {
+                    await yumi.RightArm.DisableLiveFollow();
+                }
+                await yumi.RunProcedureForBothArms("Home");
+                await yumi.RunProcedureForBothArms("Powerful");
+                await yumi.RightArm.RunProcedure("Home");
+                await yumi.LeftArm.RunProcedure("HandUp");
+
+                if (isMoving)
+                {
+                    await yumi.RightArm.ActivateLiveFollow();
+                }
+            });
         }
 
         public void UpdatePoint(float x, float y, float z)
@@ -175,7 +182,7 @@ namespace NewRobotControl
                     if (isMoving)
                     {
                         //moving...  MyPoint (x, y, z, g_state
-                        yumi.RightArm.MoveToPoint(diffp.x, diffp.y);
+                        Task.Run(async () => { await yumi.RightArm.MoveToPoint(diffp.x, diffp.y); });
                     }
                 }
             }
