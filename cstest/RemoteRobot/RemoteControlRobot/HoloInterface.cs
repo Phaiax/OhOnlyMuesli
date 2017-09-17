@@ -15,7 +15,7 @@ namespace RemoteControlRobot
 		float tresh=10f; //meter :D
 
 		MyPoint ground0, actPoint;
-		MyPoint initPoint = new MyPoint(90,-157,148, false);
+		MyPoint initPoint = new MyPoint(318,28,132, false);
 
 		public HoloInterface ()
 		{
@@ -99,7 +99,7 @@ namespace RemoteControlRobot
 					}
 					if (isMoving) {
 						//moving...  MyPoint (x, y, z, g_state
-						Program.yumi.RightArm.MoveToPoint (diffp.x,diffp.y);
+						Program.yumi.RightArm.MoveToPoint (diffp.x,diffp.y, diffp.z);
 					}
 				}
 			}
