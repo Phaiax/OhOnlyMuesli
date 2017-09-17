@@ -170,10 +170,11 @@ namespace RemoteRobotLib
 			await SetBoolVariable("LiveFollow", "bGripperState", true);
 		}
 
-		public async Task MoveToPoint(float x, float y)
+		public async Task MoveToPoint(float x, float y, float z)
 		{
 			await Task.WhenAll(SetNumVariable ("LiveFollow", "nXPos", x),
-							   SetNumVariable ("LiveFollow", "nYPos", y));
+							   SetNumVariable ("LiveFollow", "nYPos", y),
+							   SetNumVariable ("LiveFollow", "nZPos", z));
 		}
 
 		public async Task ActivateLiveFollow()

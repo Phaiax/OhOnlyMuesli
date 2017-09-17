@@ -46,15 +46,15 @@ namespace RemoteControlRobot
 		static async Task Test()
 		{
 			HoloInterface h = new HoloInterface();
-			float xg = 0.090f;
-			float yg = -0.157f;
-			float zg = 0.148f;
+			float xg = 0.318f;
+			float yg = 0.028f;
+			float zg = 0.132f;
 			h.UpdatePoint (xg, yg, zg);
 			h.StartMotion();
 			h.OpenGripper();
 
 			for (int i = 0; i < 300; i++) {
-				h.UpdatePoint (xg+(i/1000.0f), yg, zg);
+				h.UpdatePoint (xg+(i/1000.0f), yg+(i/1000.0f), zg+(i/1000.0f));
 				await Task.Delay (50);
 			}
 
