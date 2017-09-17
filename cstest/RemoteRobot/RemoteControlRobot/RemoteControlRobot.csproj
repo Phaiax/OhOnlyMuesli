@@ -71,6 +71,7 @@
     <Compile Include="HoloInterface.cs" />
     <Compile Include="AzureStorage.cs" />
     <Compile Include="MyPoint.cs" />
+    <Compile Include="marius_spielundspass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -15,7 +15,7 @@ namespace RemoteControlRobot
 		float tresh=10f; //meter :D
 
 		MyPoint ground0, actPoint;
-		MyPoint initPoint = new MyPoint(90,-157,148);
+		MyPoint initPoint = new MyPoint(90,-157,148, false);
 
 		public HoloInterface ()
 		{
@@ -82,16 +82,17 @@ namespace RemoteControlRobot
 		}
 
 		public void UpdatePoint(float x, float y, float z) {
-			x = x * 1000.0;
-			y = y * 1000.0;
-			z = z * 1000.0;
-			actPoint = MyPoint (x, y, z, g_state);
+			x =(float) (x * 1000.0);
+			y = (float)(y * 1000.0);
+			z = (float)(z * 1000.0);
+			actPoint = new MyPoint (x, y, z, g_state);
 			MyPoint newpoint = actPoint;
+			if (currentPath.Count > 0) {
 			newpoint = newpoint.diff_point(ground0);
-			if (currentPath.Count > 0) {				
+							
 				float dist = (float)Math.Sqrt (newpoint.x * newpoint.x + newpoint.y * newpoint.y + newpoint.z * newpoint.z);
-				if (dist > tresh || lastp.g != g_state) {
-					MyPoint lastp =	currentPath [currentPath.Count - 1];
+				MyPoint lastp =	currentPath [currentPath.Count - 1];
+				if (dist > tresh || lastp.g != g_state) {					
 					MyPoint diffp = lastp.add_point (newpoint);
 					if (isRecording) {
 						currentPath.Add (diffp);
