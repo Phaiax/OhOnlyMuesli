@@ -13,21 +13,60 @@ namespace RemoteControlRobot
         // Service port
 		const string hostname = "23.101.77.124";
         //const string hostname = "localhost";
+		public static AzureStorage store = new AzureStorage();
+		public static RemoteYumi yumi;
 
         static void Main(string[] args)
         {
+			
+
+
+
+			var httpClient = RobotClientProvider.GetHttpClientAsync(hostname).Result;
+			Program.yumi = new RemoteYumi(hostname, httpClient);
+			Program.yumi.Init().Wait();
+			Program.yumi.RunProcedureForBothArms("Home").Wait();
+			Program.yumi.LeftArm.RunProcedure ("HandUp");
+			Console.WriteLine (" ==== INIT COMPLETE === ");
+
             try
             {
-                //RunWithProgramPointer().Wait();
-                RunWithRunLoop().Wait();
-
+				//RunWithProgramPointer().Wait();
+				//RunWithRunLoop().Wait();
+				Test().Wait();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
+            
             Console.ReadKey();
         }
+
+		static async Task Test()
+		{
+			HoloInterface h = new HoloInterface();
+			float xg = 0.318f;
+			float yg = 0.028f;
+			float zg = 0.132f;
+			h.UpdatePoint (xg, yg, zg);
+			h.StartMotion();
+			h.OpenGripper();
+
+			for (int i = 0; i < 300; i++) {
+				h.UpdatePoint (xg+(i/1000.0f), yg+(i/1000.0f), zg+(i/1000.0f));
+				await Task.Delay (50);
+			}
+
+			//await Task.Delay (2000);
+			//h.CloseGripper();
+			//await Task.Delay (2000);
+			//h.StopMotion();
+			await Task.Delay (2000);
+			//h.GoodBoy ();
+			await Task.Delay (4000);
+			Console.WriteLine ("Waiting Finished");
+		}
 
         static async Task RunWithProgramPointer()
         {

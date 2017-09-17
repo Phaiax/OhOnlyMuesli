@@ -89,10 +89,13 @@ def liveFollow():
     setString(arm, 'stName', 'StartLiveFollow')
     setBool(arm, 'bStart', True)
 
-    for x in range(1,100):
+    for x in range(0,100):
         time.sleep(0.1)
         setNum(arm, 'nXPos', x*10, module='LiveFollow')
-        print(x*10);
+        kinError = checkBool(arm, 'bGotKinematicError', module='LiveFollow')
+        if kinError:
+            kinError = check(arm, 'stAnswer')
+        print(str(x*10) + "KinError: " + str(kinError));
 
     setBool(arm, 'bLiveFollowActive', False, module='LiveFollow')
     time.sleep(0.5)
