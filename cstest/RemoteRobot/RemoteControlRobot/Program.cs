@@ -16,7 +16,7 @@ namespace RemoteControlRobot
 		public static AzureStorage store = new AzureStorage();
 		public static RemoteYumi yumi;
 
-        static void Main(string[] args)
+        static void Init()
         {
 			var httpClient = RobotClientProvider.GetHttpClientAsync(hostname).Result;
 			Program.yumi = new RemoteYumi(hostname, httpClient);
@@ -35,7 +35,7 @@ namespace RemoteControlRobot
             {
                 Console.WriteLine(ex);
             }
-            Console.ReadKey();
+           // Console.ReadKey();
         }
 
 		static async Task Test()
