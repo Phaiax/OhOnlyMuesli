@@ -20,10 +20,12 @@ namespace NewRobotControl
         public AzureStorage store;
 
         const string hostname = "23.101.77.124";
+        //const string hostname = "172.20.0.224"; // real  robot
+
         //const string hostname = "requestb.in/1df3ott1";
 
         MyPoint ground0, actPoint;
-        MyPoint initPoint = new MyPoint(90, -157, 148, false);
+        MyPoint initPoint = new MyPoint(318, 28, 132, false);
 
         public HoloInterface()
         {
@@ -40,7 +42,9 @@ namespace NewRobotControl
         public async Task InitAsync()
         {
 #if UNITY_WSA && !UNITY_EDITOR
- 
+
+            store.putBlob(new MyPoint[] { new MyPoint(0, 0, 0, false), new MyPoint(1, 1, 1, true) });
+
             MainScript.Log("-1");
             var httpClient = RobotClientProvider.GetHttpClientAsync(hostname);
             MainScript.Log("0");
@@ -53,6 +57,7 @@ namespace NewRobotControl
 
             yumi = new RemoteYumi(hostname, httpClient);
 
+            await yumi.RightArm.DisableLiveFollow();
             MainScript.Log("1");
             await yumi.Init();
             MainScript.Log("2");
@@ -62,7 +67,7 @@ namespace NewRobotControl
             MainScript.Log("4");
 
             await yumi.RightArm.ActivateLiveFollow();
-            await yumi.RightArm.CloseGripper();
+            await yumi.RightArm.OpenGripper();
             await Task.Delay(1000);
             await yumi.RightArm.CloseGripper();
             await Task.Delay(1000);
@@ -70,14 +75,19 @@ namespace NewRobotControl
             await Task.Delay(1000);
             isInitialized = true;
             MainScript.Log("Initialized!");
+            lastUpdate = DateTime.Now;
+
+
 #endif
         }
 
         public void StartRecording()
         {
+            if (!isInitialized) return;
             currentPath.Clear();
             isRecording = true;
             StartMotion();
+            currentPath.Add(initPoint);
         }
 
         public void StopRecording()
@@ -87,7 +97,7 @@ namespace NewRobotControl
             {
                 isRecording = false;
                 var arr = currentPath.ToArray();
-                Task.Run(async () => { await store.putBlob(arr); });
+                Task.Run(() => { store.putBlob(arr); });
             }
             StopMotion();
         }
@@ -98,7 +108,9 @@ namespace NewRobotControl
             if (!isMoving)
             {
                 isMoving = true;
-                
+                isRecording = true;
+                currentPath.Clear();
+
                 Task.Run(async () => { await yumi.RightArm.ActivateLiveFollow(); });
 
                 ground0 = actPoint;
@@ -113,6 +125,11 @@ namespace NewRobotControl
             {
                 isMoving = false;
                 Task.Run(async () => { await yumi.RightArm.DisableLiveFollow(); });
+
+                isRecording = false;
+                var arr = currentPath.ToArray();
+                Task.Run( () => {  store.putBlob(arr); });
+
             }
         }
 
@@ -157,6 +174,8 @@ namespace NewRobotControl
             });
         }
 
+        private DateTime lastUpdate = DateTime.Now;
+
         public void UpdatePoint(float x, float y, float z)
         {
             if (!isInitialized) return;
@@ -166,6 +185,14 @@ namespace NewRobotControl
             z = (float)(z * 1000.0);
             actPoint = new MyPoint(x, y, z, g_state);
             MyPoint newpoint = actPoint;
+
+            var timediff = DateTime.Now - lastUpdate;
+            if (timediff.TotalMilliseconds < 300)
+            {
+                return;
+            }
+            lastUpdate = DateTime.Now;
+
             if (currentPath.Count > 0)
             {
                 newpoint = newpoint.diff_point(ground0);
@@ -182,7 +209,7 @@ namespace NewRobotControl
                     if (isMoving)
                     {
                         //moving...  MyPoint (x, y, z, g_state
-                        Task.Run(async () => { await yumi.RightArm.MoveToPoint(diffp.x, diffp.y); });
+                        Task.Run(async () => { await yumi.RightArm.MoveToPoint(diffp.x, diffp.y, diffp.z); });
                     }
                 }
             }

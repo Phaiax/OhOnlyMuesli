@@ -94,6 +94,7 @@ public class Dispatcher : MonoBehaviour
         }
         else
         {
+            Debug.Log("DISPATCHER ACTIVATED");
             _instance = this;
             _instanceExists = true;
             _mainThread = Thread.CurrentThread;

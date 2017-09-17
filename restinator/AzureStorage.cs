@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using Newtonsoft.Json;
 using Unity3dAzure.StorageServices;
 using System.Threading.Tasks;
 
@@ -9,6 +8,7 @@ namespace NewRobotControl
 	public class AzureStorage
 	{
         private BlobService bs;
+        
 
         public AzureStorage ()
 		{
@@ -18,16 +18,22 @@ namespace NewRobotControl
             bs = new BlobService(cl);
 		}
 
-		public async Task putBlob(MyPoint[] list)
+		public void putBlob(MyPoint[] list)
 		{
-            await new Task(() => { 
-			    DateTime now = DateTime.Now;
-			    String blobname = "path-" + now.Year + "." + now.Month + "." + now.Day + "-" + now.Hour + ":" + now.Minute;
+			DateTime now = DateTime.Now;
+			String blobname = "path-" + now.Year + "." + now.Month + "." + now.Day + "-" + now.Hour + ":" + now.Minute;
+            MainScript.Log("Blob: " + blobname);
 
-                String j = JsonConvert.SerializeObject(list);
+            string j = "";
+            foreach (MyPoint p in list)
+            {
+                string s = String.Format("{0},{1},{2},{3};", p.x, p.y, p.z, p.g);
+                j += s;
+            }
+                
+            MainScript.Log("Serialized: " + j);
 
-                bs.PutTextBlob((pr) => { MainScript.Log(pr.StatusCode.ToString() + " [" + pr.Content + "]"); }, j, "hololense", blobname, "text/json");
-            });
+            bs.PutTextBlob((pr) => { MainScript.Log(pr.StatusCode.ToString() + " [" + pr.Content + "]"); }, j, "hololense", blobname, "text/json");
         }
 	}
 }

@@ -194,11 +194,12 @@ namespace NewRobotControl
             await SetBoolVariable("LiveFollow", "bGripperState", true);
 		}
 
-		public async Task MoveToPoint(float x, float y)
+		public async Task MoveToPoint(float x, float y, float z)
 		{
             await SetNumVariable("LiveFollow", "nXPos", x);
             await SetNumVariable("LiveFollow", "nYPos", y);
-		}
+            await SetNumVariable("LiveFollow", "nZPos", z);
+        }
 
 		public async Task ActivateLiveFollow()
 		{
