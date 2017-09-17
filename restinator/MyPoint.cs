@@ -31,6 +31,11 @@ namespace NewRobotControl
             return new MyPoint(x - p.x, y - p.y, z - p.z, g);
         }
 
+        public MyPoint add_point(MyPoint p)
+        {
+            return new MyPoint(x + p.x, y + p.y, z + p.z, g);
+        }
+
         ////Deserialization constructor.
         //public MyPoint(SerializationInfo info, StreamingContext ctxt)
         //{

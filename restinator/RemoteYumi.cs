@@ -34,9 +34,9 @@ namespace NewRobotControl
         /// Runs the same procedure for both arms.
         /// </summary>
         /// <param name="procedureName">The name of the procdure.</param>
-        public void RunProcedureForBothArms(string procedureName)
+        public async Task RunProcedureForBothArms(string procedureName)
         {
-            Task.WaitAll(new Task[] { LeftArm.RunProcedure(procedureName), RightArm.RunProcedure(procedureName) });               
+            await Task.WhenAll(new Task[] { LeftArm.RunProcedure(procedureName), RightArm.RunProcedure(procedureName) });               
         }
 
         public async Task StartExecution()

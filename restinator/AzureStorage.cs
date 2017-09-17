@@ -1,46 +1,34 @@
 ﻿using System;
 using System.Collections;
-using Microsoft.Azure;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
+using Unity3dAzure.StorageServices;
+using System.Threading.Tasks;
 
 namespace NewRobotControl
 {
 	public class AzureStorage
 	{
-		private CloudStorageAccount storageAccount;
-		private CloudBlobClient blobClient;
-		private CloudBlobContainer container;
+        private BlobService bs;
 
-		public AzureStorage ()
+        public AzureStorage ()
 		{
-			String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=oom;AccountKey=sIRqaNUlztHLFaaE/BKasMU/zg4M3V4+a8pfKI/oiUcGtv51VDoMWqt3E1UK+6Ion5jmohFM3+uTl7pMcrdQjw==";
-			storageAccount = CloudStorageAccount.Parse(storageConnectionString);
+			//String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=oom;AccountKey=sIRqaNUlztHLFaaE/BKasMU/zg4M3V4+a8pfKI/oiUcGtv51VDoMWqt3E1UK+6Ion5jmohFM3+uTl7pMcrdQjw==";
+            StorageServiceClient cl = new StorageServiceClient("oom", "sIRqaNUlztHLFaaE/BKasMU/zg4M3V4+a8pfKI/oiUcGtv51VDoMWqt3E1UK+6Ion5jmohFM3+uTl7pMcrdQjw==");
 
-			blobClient = storageAccount.CreateCloudBlobClient();
-
-			// Retrieve a reference to a container.
-			container = blobClient.GetContainerReference("hololense");
-
-			// Create the container if it doesn't already exist.
-			if (container.CreateIfNotExists ()) {
-				container.SetPermissions (
-					new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-			}
+            bs = new BlobService(cl);
 		}
 
-		public void putBlob(MyPoint[] list)
+		public async Task putBlob(MyPoint[] list)
 		{
-			DateTime now = DateTime.Now;
-			String blobname = "path-" + now.Year + "." + now.Month + "." + now.Day + "-" + now.Hour + ":" + now.Minute;
-			// Retrieve reference to a blob named "myblob".
-			CloudBlockBlob blockBlob = container.GetBlockBlobReference(blobname);
+            await new Task(() => { 
+			    DateTime now = DateTime.Now;
+			    String blobname = "path-" + now.Year + "." + now.Month + "." + now.Day + "-" + now.Hour + ":" + now.Minute;
 
-			String j = JsonConvert.SerializeObject (list);
-			blockBlob.UploadText(j);
-		}
+                String j = JsonConvert.SerializeObject(list);
+
+                bs.PutTextBlob((pr) => { MainScript.Log(pr.StatusCode.ToString() + " [" + pr.Content + "]"); }, j, "hololense", blobname, "text/json");
+            });
+        }
 	}
 }
 

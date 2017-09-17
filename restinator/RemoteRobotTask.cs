@@ -107,12 +107,14 @@ namespace NewRobotControl
             var response = await _client.GetAsync(new Uri(url));
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            JObject json = JObject.Parse(content);
-            string value = json["_embedded"]["_state"][0]["value"].ToString();
+            //JObject json = JObject.Parse(content);
+            //string value = json["_embedded"]["_state"][0]["value"].ToString();
+            string value = "false";
             MainScript.Log("GET " + url + " getBool() -> " + value);
             return ParseBoolString(value);
+#else   
+            return false;
 #endif
-
         }
 
         async Task SetNumVariable(string moduleName, string name, float value)
@@ -145,6 +147,8 @@ namespace NewRobotControl
 			string respcontent = await response.Content.ReadAsStringAsync();
             
             MainScript.Log("POST " + url + " " + DictToString(parameters) + " " + respcontent);
+#else
+            return;
 #endif
 
         }

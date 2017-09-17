@@ -17,13 +17,22 @@ namespace NewRobotControl
         float tresh = 0.05f; //meter :D
 
         public RemoteYumi yumi;
+        public AzureStorage store;
 
         const string hostname = "23.101.77.124";
         //const string hostname = "requestb.in/1df3ott1";
 
+        MyPoint ground0, actPoint;
+        MyPoint initPoint = new MyPoint(90, -157, 148, false);
+
         public HoloInterface()
         {
-            InitAsync().Start();
+            store = new AzureStorage();
+            Task.Run(async () => 
+            {
+                await InitAsync();
+            });
+            
         }
 
 
@@ -46,7 +55,7 @@ namespace NewRobotControl
             MainScript.Log("1");
             await yumi.Init();
             MainScript.Log("2");
-            yumi.RunProcedureForBothArms("Home");
+            await yumi.RunProcedureForBothArms("Home");
             MainScript.Log("3");
             await yumi.LeftArm.RunProcedure("HandUp");
             MainScript.Log("4");
@@ -76,7 +85,7 @@ namespace NewRobotControl
             if (isRecording)
             {
                 isRecording = false;
-                //Program.store.putBlob (currentPath.ToArray ());
+                store.putBlob (currentPath.ToArray ());
             }
             StopMotion();
         }
@@ -87,7 +96,9 @@ namespace NewRobotControl
             if (!isMoving)
             {
                 isMoving = true;
-                yumi.RightArm.ActivateLiveFollow().Start();
+                yumi.RightArm.ActivateLiveFollow();
+                ground0 = actPoint;
+                currentPath.Add(initPoint); //sonst lässt sich das delta nicht berechnen
             }
         }
 
@@ -97,7 +108,7 @@ namespace NewRobotControl
             if (isMoving)
             {
                 isMoving = false;
-                yumi.RightArm.DisableLiveFollow().Start();
+                yumi.RightArm.DisableLiveFollow();
             }
         }
 
@@ -107,7 +118,7 @@ namespace NewRobotControl
             if (g_state == false)
             {
                 g_state = true;
-                yumi.RightArm.CloseGripper().Start();
+                yumi.RightArm.CloseGripper();
             }
         }
 
@@ -117,26 +128,55 @@ namespace NewRobotControl
             if (g_state == true)
             {
                 g_state = false;
-                yumi.RightArm.OpenGripper().Start();
+                yumi.RightArm.OpenGripper();
+            }
+        }
+
+
+        public void GoodBoy()
+        {
+            if (isMoving)
+            {
+                yumi.RightArm.DisableLiveFollow().Wait();
+            }
+            yumi.RunProcedureForBothArms("Home");
+            yumi.RunProcedureForBothArms("Powerful");
+            yumi.RightArm.RunProcedure("Home").Wait();
+            yumi.LeftArm.RunProcedure("HandUp").Wait();
+
+            if (isMoving)
+            {
+                yumi.RightArm.ActivateLiveFollow().Wait();
             }
         }
 
         public void UpdatePoint(float x, float y, float z)
         {
             if (!isInitialized) return;
-            MyPoint lastp = currentPath[currentPath.Count - 1];
-            MyPoint diffp = lastp.diff_point(new MyPoint(x, y, z, g_state));
-            float dist = (float)Math.Sqrt(diffp.x * diffp.x + diffp.y * diffp.y + diffp.z * diffp.z);
-            if (dist > tresh || lastp.g != g_state)
+
+            x = (float)(x * 1000.0);
+            y = (float)(y * 1000.0);
+            z = (float)(z * 1000.0);
+            actPoint = new MyPoint(x, y, z, g_state);
+            MyPoint newpoint = actPoint;
+            if (currentPath.Count > 0)
             {
-                if (isRecording)
+                newpoint = newpoint.diff_point(ground0);
+
+                float dist = (float)Math.Sqrt(newpoint.x * newpoint.x + newpoint.y * newpoint.y + newpoint.z * newpoint.z);
+                MyPoint lastp = currentPath[currentPath.Count - 1];
+                if (dist > tresh || lastp.g != g_state)
                 {
-                    currentPath.Add(new MyPoint(x, y, z, g_state));
-                }
-                if (isMoving)
-                {
-                    //moving...  MyPoint (x, y, z, g_state
-                    yumi.RightArm.MoveToPoint(x, y).Start();
+                    MyPoint diffp = lastp.add_point(newpoint);
+                    if (isRecording)
+                    {
+                        currentPath.Add(diffp);
+                    }
+                    if (isMoving)
+                    {
+                        //moving...  MyPoint (x, y, z, g_state
+                        yumi.RightArm.MoveToPoint(diffp.x, diffp.y);
+                    }
                 }
             }
         }
